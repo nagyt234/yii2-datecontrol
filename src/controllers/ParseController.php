@@ -11,6 +11,8 @@ namespace kartik\datecontrol\controllers;
 
 use DateTimeZone;
 use Yii;
+use yii\helpers\ArrayHelper;
+use yii\helpers\StringHelper;
 use yii\web\Controller;
 use yii\web\Response;
 use kartik\datecontrol\DateControl;
@@ -39,6 +41,21 @@ class ParseController extends Controller
         $dispTimezone = $req->post('dispTimezone', '');
         $displayDate = $req->post('displayDate', '');
         $settings = $req->post('settings', []);
+
+        // https://github.com/alexsuter/yii2-datecontrol - 14669c89b0827f84b840f7fe2bde08a451557eff
+        // Russian dates ends with \r. - see https://github.com/yiisoft/yii2/issues/17144
+        if (StringHelper::endsWith($dispFormat, '.')) {
+            $dispFormat = substr($dispFormat, 0, strlen($dispFormat) - 4);
+            $displayDate = substr($post['displayDate'], 0, strlen($post['displayDate']) - 4);
+        }
+        
+        // https://github.com/alexsuter/yii2-datecontrol - 17776e5230be0245be2876a60fd2c7b85828364d
+        // Only apply Timezone settings on DateTime Formats
+        if (ArrayHelper::getValue($post, 'type') != DateControl::FORMAT_DATETIME) {
+            $dispTimezone = null;
+            $saveTimezone = null;
+        }
+
         $date = DateControl::getTimestamp($displayDate, $dispFormat, $dispTimezone, $settings);
         if (empty($date) || !$date) {
             $value = '';
